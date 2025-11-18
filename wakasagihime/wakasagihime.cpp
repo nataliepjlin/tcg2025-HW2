@@ -6,6 +6,8 @@
 #include "lib/types.h"
 #include "lib/helper.h"
 
+#include "mcts/headers/mcts.h"
+
 // Girls are preparing...
 __attribute__((constructor)) void prepare()
 {
@@ -47,32 +49,19 @@ int main()
      * it MAY affect your readability score.
      */
     std::string line;
+    std::unique_ptr<MCTS> agent = nullptr;
     /* read input board state */
     while (std::getline(std::cin, line)) {
         Position pos(line);
-        MoveList moves(pos);
-
-        int min_score = 100;
-        int chosen = 0;
-
-        for (int i = 0; i < moves.size(); i += 1) {
-            Position copy(pos);
-            copy.do_move(moves[i]);
-            int local_score = 0;
-            for (int j = 0; j < 20; j += 1) {
-                /* Run some (20) simulations. */
-                local_score += copy.simulate(strategy_random);
-            }
-            /*
-             * The simulations started from the opponent's perspective,
-             * so we choose the move that led to the MINIMUM score here.
-             */
-            if (local_score < min_score) {
-                chosen = i;
-                min_score = local_score;
-            }
+        if(!agent){
+            agent = std::make_unique<MCTS>(pos.due_up(), pos, 1.8, 5);
         }
-        /* output the move */
-        info << moves[chosen];
+        else{
+            agent->reset(pos, pos.due_up());
+        }
+
+        agent->MCTS_simulate(1000, 4.9);
+        Move best_move = agent->get_best_move(4.9, 1000);
+        info << best_move;
     }
 }
