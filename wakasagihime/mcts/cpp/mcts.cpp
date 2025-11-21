@@ -8,8 +8,27 @@
 #include <cmath>
 
 long double UCB(int id, const std::vector<MCTSNode> &tree){
-    long double exploitation = (tree[id].depth & 1) ? (tree[id].Mean) : (1.0 - tree[id].Mean);
-    return exploitation + tree[ tree[id].p_id ].CsqrtlogN/tree[id].sqrtN;
+    const MCTSNode &node = tree[id];
+
+    // standard win term
+    long double ucb_value = (node.depth & 1) ? (node.Mean) : (1.0 - node.Mean);
+
+    // amaf win term
+    long double amafWinRate = (node.depth & 1) ? (node.AMAF_Mean) : (1.0 - node.AMAF_Mean);
+
+    // get beta, i.e. sqrt(k / (3N + k))
+    long double beta = 0.0;
+    if(node.AMAF_N > 0){
+        beta = sqrt(RAVE_EQUIV / (3.0 * node.sqrtN + RAVE_EQUIV));
+    }
+
+    // RAVE
+    long double combinedMean = (1.0 - beta) * ucb_value + beta * amafWinRate;
+
+    // exploration term
+    long double exploration = tree[node.p_id].CsqrtlogN / node.sqrtN;
+
+    return combinedMean + exploration;
 }
 
 int find_best_ucb(int cur_id, const std::vector<MCTSNode> &tree){
@@ -64,26 +83,33 @@ void update(int id, const UpdateData &data, std::vector<MCTSNode> &tree){
     tree[id].Mean * tree[id].Mean;
 }
 
-UpdateData simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree){// returns number of extra visits
-    
-    UpdateData data = {0, 0, 0};
-    UpdateData dummy_data = {0, 0, 0};// to update leaf node later
+int pos_simulate(Position &pos, std::vector<Move>&history, Move (*strategy)(MoveList<> &moves)){
+    Position copy(pos);
+    while(copy.winner() == NO_COLOR){
+        MoveList<> moves(copy);
+        Move m = strategy(moves);
+        copy.do_move(m);
+        history.push_back(m);
+    }
+
+    if(copy.winner() == copy.due_up()){
+        return 1;
+    }
+    else if(copy.winner() == Mystery){
+        return 0;
+    }
+    return -1;
+}
+
+SimResult simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree) {
+    SimResult result;
+    result.data = {0, 0, 0};
     
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
         for(int j = 0; j < SIMULATION_PER_CHILD; j++){
-            Position copy(pos);
-            copy.do_move(tree[child_id].ply);
-            int result = copy.simulate(strategy_random);
-            result = (result == -1); // convert to win for side to move
-
-            tree[child_id].sum1 += result;
-            tree[child_id].sum2 += result * result;
-            tree[child_id].Ntotal++;
-
-            data.deltaS += result;
-            data.deltaS2 += result * result;
-            data.deltaN++;
+            int win = pos_simulate(pos, result.moves_played, strategy_random);
+                
         }
         // update child node
         update(child_id, dummy_data, tree);
