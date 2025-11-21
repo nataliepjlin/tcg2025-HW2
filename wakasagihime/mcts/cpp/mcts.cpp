@@ -109,18 +109,47 @@ SimResult simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree) {
         int child_id = tree[cur_id].c_id[i];
         for(int j = 0; j < SIMULATION_PER_CHILD; j++){
             int win = pos_simulate(pos, result.moves_played, strategy_random);
-                
+            int actual_win = (tree[child_id].depth & 1) ? win : -win;
+            result.data.deltaS += actual_win;
+            result.data.deltaS2 += actual_win * actual_win;
+            result.data.deltaN += 1;
+            
         }
         // update child node
+        UpdateData dummy_data = {0, 0, 0};
         update(child_id, dummy_data, tree);
     }
-    return data;
+    return result;
 }
 
-void backpropagate(int id, const UpdateData &data, std::vector<MCTSNode> &tree){
+bool was_played(const Move &m, const std::vector<Move> &moves_played){
+    for(const Move &mv : moves_played){
+        if(mv == m)
+            return true;
+    }
+    return false;
+}
+
+void backpropagate(int id, const SimResult &data, std::vector<MCTSNode> &tree){
     int current_id = id;
     while(true){
-        update(current_id, data, tree);
+        // standard update
+        update(current_id, data.data, tree);
+
+        // AMAF/RAVE update
+        for(int i = 0; i < tree[current_id].Nchild; i++){
+            Move move = tree[tree[current_id].c_id[i]].ply;
+            if(was_played(move, data.moves_played)){
+                tree[current_id].AMAF_N += data.data.deltaN;
+                tree[current_id].AMAF_sum += data.data.deltaS;
+
+                if(tree[current_id].AMAF_N > 0){
+                    tree[current_id].AMAF_Mean = (long double) tree[current_id].AMAF_sum
+                    / (long double) tree[current_id].AMAF_N;
+                }
+            }
+        }
+
         if(current_id == root_id)
             break;
         current_id = tree[current_id].p_id;
@@ -140,7 +169,7 @@ int find_best_move(const std::vector<MCTSNode> &tree){
     return best_id;
 }
 
-UpdateData terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree){
+ SimResult terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree){
     // update terminal node with win/loss
     int result;
     if(pos.winner() == pos.due_up()){
@@ -153,10 +182,11 @@ UpdateData terminal_update(int id, const Position &pos, std::vector<MCTSNode> &t
         result = -1;
     }
 
-    UpdateData data;
-    data.deltaS = result;
-    data.deltaS2 = result * result;
-    data.deltaN = 1;
-    return data;
+    SimResult res;
+    res.data.deltaS = result;
+    res.data.deltaS2 = result * result;
+    res.data.deltaN = 1;
+    // moves_played is empty
+    return res;
 }
 #endif // MCTS_CPP

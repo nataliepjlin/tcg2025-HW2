@@ -26,6 +26,7 @@ Position find_pv(const Position &pos, int &cur_id, const std::vector<MCTSNode> &
 bool expand(const Position &pos, const int cur_id, std::vector<MCTSNode> &tree);
 void update(int id, const UpdateData &data, std::vector<MCTSNode> &tree);
 SimResult simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree);
+bool was_played(const Move &m, const std::vector<Move> &moves_played);
 void backpropagate(int id, const SimResult &data, std::vector<MCTSNode> &tree);
 int find_best_move(const std::vector<MCTSNode> &tree);
 SimResult terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree);

@@ -54,18 +54,18 @@ int main()
             int current_id = root_id;
             Position pv_pos = find_pv(pos, current_id, tree);// current_id is updated inside
 
-            UpdateData data;
+            SimResult res;
             // Expansion
             if(!expand(pv_pos, current_id, tree)){
                 // a terminal node is reached
-                data = terminal_update(current_id, pv_pos, tree);
+                res = terminal_update(current_id, pv_pos, tree);
             }
 
             // Simulation
-            data = simulate(pv_pos, current_id, tree);// retrieve data to update pv
+            res = simulate(pv_pos, current_id, tree);// retrieve data to update pv
             
             // Backpropagation
-            backpropagate(current_id, data, tree);
+            backpropagate(current_id, res, tree);
         }
 
         // choose the best move
