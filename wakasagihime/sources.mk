@@ -6,4 +6,4 @@
 CHINESE = 1
 
 # +-- Add your own sources here, if any --+
-ADD_SOURCES = 
+ADD_SOURCES = mcts/cpp/mcts.cpp
