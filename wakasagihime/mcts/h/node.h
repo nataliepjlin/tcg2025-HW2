@@ -20,6 +20,9 @@ public:
     long double Mean; // average score, i.e. win rate
     long double Variance; // variance of score
 
+    int N_AMAF;
+    long long sum1_AMAF;
+
     MCTSNode(int pid = 0, int d = 0){
         p_id = pid;
         depth = d;
@@ -29,6 +32,9 @@ public:
 
         sum1 = 0;
         sum2 = 0;
+
+        N_AMAF = 0;
+        sum1_AMAF = 0;
     }
 
     MCTSNode(int pid, int d, Move m){
@@ -40,6 +46,9 @@ public:
 
         sum1 = 0;
         sum2 = 0;
+
+        N_AMAF = 0;
+        sum1_AMAF = 0;
     }
 };
 

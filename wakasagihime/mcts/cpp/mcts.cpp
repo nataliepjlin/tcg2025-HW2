@@ -15,8 +15,19 @@ long double UCB(int id, const std::vector<MCTSNode> &tree){
     if(tree[id].Ntotal >= MAX_VISIT)
         return -tree[id].Mean;
 
-    long double exploitation = -tree[id].Mean; 
-    return exploitation + tree[ tree[id].p_id ].CsqrtlogN / tree[id].sqrtN;
+    // mcts ucb
+    long double mc_score = -tree[id].Mean;
+
+    // amaf
+    long double amaf_score = 0;
+    if(tree[id].N_AMAF > 0){
+        amaf_score = -((long double)tree[id].sum1_AMAF / tree[id].N_AMAF);
+    }
+
+    long double alpha = std::max(0.0L, std::min(1.0L, (long double)tree[id].Ntotal / RAVE_EQUIV));
+    long double combined_score = alpha * mc_score + (1.0L - alpha) * amaf_score;
+
+    return combined_score + tree[ tree[id].p_id ].CsqrtlogN / tree[id].sqrtN;
 }
 
 int find_best_ucb(int cur_id, const std::vector<MCTSNode> &tree){
@@ -70,33 +81,58 @@ void update(int id, const int deltaS, const int deltaS2, const int deltaN, std::
                         tree[id].Mean * tree[id].Mean;
 }
 
-void simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree){
+void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree){
+    std::vector<Move> played_moves;
+    played_moves.reserve(SIMULATION_PER_CHILD * tree[cur_id].Nchild);
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
         for(int j = 0; j < SIMULATION_PER_CHILD; j++){
             Position copy(pos);
             copy.do_move(tree[child_id].ply);
-            int result = copy.simulate(strategy_random);
+            int result = pos_simulation(copy, strategy_random, played_moves);
 
-            backpropagate(child_id, result, result * result, 1, tree);
+            backpropagate(child_id, result, result * result, 1, tree, played_moves);
         }
     }
 }
 
-void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree){
-    int current_id = id;
+bool is_move_in_simulation(const Move &m, const std::vector<Move> &played_moves){
+    for(const Move &mv : played_moves){
+        if(mv == m)
+            return true;
+    }
+    return false;
+}
+
+void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const std::vector<Move>& played_moves){    int current_id = id;
     while(true){
+        // standard mcts update
         update(current_id, deltaS, deltaS2, deltaN, tree);
         if(current_id == root_id)
             break;
-        current_id = tree[current_id].p_id;
+
+        // amaf update
+        int parent_id = tree[current_id].p_id;
+        for(int i = 0; i < tree[parent_id].Nchild; i++){
+            int sibling_id = tree[parent_id].c_id[i];
+            if(sibling_id == current_id)
+                continue;
+            
+            if(is_move_in_simulation(tree[sibling_id].ply, played_moves)){
+                tree[sibling_id].N_AMAF += deltaN;
+                tree[sibling_id].sum1_AMAF += deltaS;
+            }
+        }
+
+        current_id = parent_id;
         deltaS = -deltaS;// switch perspective
     }
 }
 
 int find_best_move(const std::vector<MCTSNode> &tree){
     
-    int best_id = tree[root_id].c_id[0];long double bestWR = -tree[best_id].Mean; 
+    int best_id = tree[root_id].c_id[0];
+    long double bestWR = -tree[best_id].Mean; 
     
     for(int i = 1; i < tree[root_id].Nchild; i++){
         int ctemp = tree[root_id].c_id[i];
@@ -121,6 +157,6 @@ void terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree){
     else{
         result = -1;
     }
-    backpropagate(id, result, result * result, 1, tree);
+    backpropagate(id, result, result * result, 1, tree, {});
 }
 #endif // MCTS_CPP

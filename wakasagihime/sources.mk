@@ -6,4 +6,5 @@
 CHINESE = 1
 
 # +-- Add your own sources here, if any --+
-ADD_SOURCES = mcts/cpp/mcts.cpp
+ADD_SOURCES = mcts/cpp/mcts.cpp \
+			  mcts/cpp/simulation.cpp

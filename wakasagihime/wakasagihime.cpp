@@ -61,7 +61,7 @@ int main()
             }
             else{
                 // Simulation & Backpropagation
-                simulate(pv_pos, current_id, tree);
+                mcts_simulate(pv_pos, current_id, tree);
             }
         }
 
