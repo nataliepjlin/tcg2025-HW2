@@ -20,24 +20,15 @@ public:
     long double Mean; // average score, i.e. win rate
     long double Variance; // variance of score
 
-    int AMAF_N;          // Number of times this move appeared in ANY descendant playout
-    long double AMAF_sum;// Sum of scores for those playouts
-    long double AMAF_Mean; // AMAF win rate
-
     MCTSNode(int pid = 0, int d = 0){
         p_id = pid;
         depth = d;
+        // expandable = true;
         Nchild = 0;
         Ntotal = 0;
 
         sum1 = 0;
         sum2 = 0;
-        Mean = 0.0L;
-        Variance = 0.0L;
-
-        AMAF_N = 0;
-        AMAF_sum = 0.0L;
-        AMAF_Mean = 0.0L;
     }
 
     MCTSNode(int pid, int d, Move m){
@@ -49,12 +40,6 @@ public:
 
         sum1 = 0;
         sum2 = 0;
-        Mean = 0.0L;
-        Variance = 0.0L;
-
-        AMAF_N = 0;
-        AMAF_sum = 0.0L;
-        AMAF_Mean = 0.0L;
     }
 };
 

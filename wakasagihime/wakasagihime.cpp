@@ -37,11 +37,11 @@ __attribute__((constructor)) void prepare()
 int main()
 {
     std::string line;
-    std::chrono::milliseconds TIME_LIMIT(4900);
-    auto start_time = std::chrono::steady_clock::now();
+    std::chrono::milliseconds TIME_LIMIT(4700);
 
     /* read input board state */
     while (std::getline(std::cin, line)) {
+        auto start_time = std::chrono::steady_clock::now();
         Position pos(line);
         
         // build root node
@@ -54,18 +54,15 @@ int main()
             int current_id = root_id;
             Position pv_pos = find_pv(pos, current_id, tree);// current_id is updated inside
 
-            SimResult res;
             // Expansion
             if(!expand(pv_pos, current_id, tree)){
                 // a terminal node is reached
-                res = terminal_update(current_id, pv_pos, tree);
+                terminal_update(current_id, pv_pos, tree);
             }
-
-            // Simulation
-            res = simulate(pv_pos, current_id, tree);// retrieve data to update pv
-            
-            // Backpropagation
-            backpropagate(current_id, res, tree);
+            else{
+                // Simulation & Backpropagation
+                simulate(pv_pos, current_id, tree);
+            }
         }
 
         // choose the best move
