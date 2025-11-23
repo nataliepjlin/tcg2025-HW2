@@ -20,9 +20,13 @@ public:
     long double Mean; // average score, i.e. win rate
     long double Variance; // variance of score
 
+    Color c_from;
+    PieceType pt_from;
+
     int N_AMAF;
     long long sum1_AMAF;
 
+    // root
     MCTSNode(int pid = 0, int d = 0){
         p_id = pid;
         depth = d;
@@ -37,7 +41,8 @@ public:
         sum1_AMAF = 0;
     }
 
-    MCTSNode(int pid, int d, Move m){
+    // non-root
+    MCTSNode(int pid, int d, Move m, const Position &pos){
         p_id = pid;
         depth = d;
         ply = m;
@@ -46,6 +51,9 @@ public:
 
         sum1 = 0;
         sum2 = 0;
+
+        c_from = pos.peek_piece_at(m.from()).side;
+        pt_from = pos.peek_piece_at(m.from()).type;
 
         N_AMAF = 0;
         sum1_AMAF = 0;

@@ -37,7 +37,7 @@ __attribute__((constructor)) void prepare()
 int main()
 {
     std::string line;
-    std::chrono::milliseconds TIME_LIMIT(4700);
+    std::chrono::milliseconds TIME_LIMIT(4500);
 
     /* read input board state */
     while (std::getline(std::cin, line)) {
