@@ -476,6 +476,7 @@ bool Position::undo_move()
     }
 
     history.pop();
+    sideToMove = ~sideToMove;
     return true;
 }
 
