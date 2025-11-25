@@ -36,7 +36,7 @@ Move strategy_weighted_random(const Position &pos, MoveList<> &moves){
     return moves[index];
 }
 
-int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves){
+int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves, const Color root_color){
     Position copy(pos);
 
     int depth_count = 0;
@@ -51,7 +51,7 @@ int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves){
         #endif
         copy.do_move(m);
     }
-    if (copy.winner() == pos.due_up()) {
+    if (copy.winner() == root_color) {
         return 1;
     } else if (copy.winner() == Mystery) {
         return 0;
