@@ -48,6 +48,6 @@ struct AmafMove{
 
 int move_evaluation(const Position &pos, const Move &m);
 Move strategy_weighted_random(const Position &pos, MoveList<> &moves);
-int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves, const Color root_color);
+int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves);
 
 #endif // SIMULATION_H

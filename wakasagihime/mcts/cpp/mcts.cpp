@@ -12,7 +12,7 @@ long double UCB(int id, const std::vector<MCTSNode> &tree){
     if(tree[id].sqrtN == 0) return inf; 
     
     // mcts ucb
-    long double mc_score = (tree[id].depth & 1) ? (1 - (tree[id].Mean-MIN_S) / RANGE) : (tree[id].Mean - MIN_S) / RANGE;
+    long double mc_score = -tree[id].Mean;
     
     // If visited enough, purely exploit
     if(tree[id].Ntotal >= MAX_VISIT)
@@ -85,14 +85,14 @@ void update(int id, const int deltaS, const int deltaS2, const int deltaN, std::
                         tree[id].Mean * tree[id].Mean;
 }
 
-void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const Color root_color){
+void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree){
     std::vector<AmafMove> played_moves;
     played_moves.reserve(AMAF_CUTOFF);
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
         Position copy(pos);
         copy.do_move(tree[child_id].ply);
-        int result = pos_simulation(copy, played_moves, root_color);
+        int result = pos_simulation(copy, played_moves);
 
         backpropagate(child_id, result, result * result, 1, tree, played_moves);
     }
@@ -102,7 +102,7 @@ void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const
         played_moves.clear();
         Position copy(pos);
         copy.do_move(tree[best_child].ply);
-        double result = pos_simulation(copy, played_moves, root_color);
+        double result = pos_simulation(copy, played_moves);
         backpropagate(best_child, result, result * result, 1, tree, played_moves);
     }
 }
@@ -142,18 +142,19 @@ void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vecto
         #endif // RAVE
 
         current_id = parent_id;
+        deltaS = -deltaS;// switch perspective
     }
 }
 
 int find_best_move(const std::vector<MCTSNode> &tree){
     
     int best_id = tree[root_id].c_id[0];
-    long double bestWR = tree[best_id].Mean; 
+    long double bestWR = -tree[best_id].Mean; 
     
     for(int i = 1; i < tree[root_id].Nchild; i++){
         int ctemp = tree[root_id].c_id[i];
         
-        long double tempWR = tree[ctemp].Mean; 
+        long double tempWR = -tree[ctemp].Mean; 
         
         if(bestWR < tempWR){
             bestWR = tempWR; best_id = ctemp;
@@ -162,9 +163,9 @@ int find_best_move(const std::vector<MCTSNode> &tree){
     return best_id;
 }
 
-void terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree, const Color root_color){
+void terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree){
     int result;
-    if(pos.winner() == root_color){
+    if(pos.winner() == pos.due_up()){
         result = 1;
     }
     else if(pos.winner() == Mystery){

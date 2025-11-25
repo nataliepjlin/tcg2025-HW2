@@ -68,17 +68,16 @@ int main()
         while (std::chrono::steady_clock::now() - start_time < TIME_LIMIT){
             // Selection
             int current_id = root_id;
-            Color root_color = pos.due_up();
             Position pv_pos = find_pv(pos, current_id, tree);// current_id is updated inside
 
             // Expansion
             if(!expand(pv_pos, current_id, tree)){
                 // a terminal node is reached
-                terminal_update(current_id, pv_pos, tree, root_color);
+                terminal_update(current_id, pv_pos, tree);
             }
             else{
                 // Simulation & Backpropagation
-                mcts_simulate(pv_pos, current_id, tree, root_color);
+                mcts_simulate(pv_pos, current_id, tree);
             }
         }
 
