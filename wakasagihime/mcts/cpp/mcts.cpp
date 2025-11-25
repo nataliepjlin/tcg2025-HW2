@@ -11,18 +11,18 @@
 long double UCB(int id, const std::vector<MCTSNode> &tree){
     if(tree[id].sqrtN == 0) return inf; 
     
-    // If visited enough, purely exploit
-    if(tree[id].Ntotal >= MAX_VISIT)
-        return -tree[id].Mean;
-
     // mcts ucb
     long double mc_score = -tree[id].Mean;
+    
+    // If visited enough, purely exploit
+    if(tree[id].Ntotal >= MAX_VISIT)
+        return mc_score;
 
     #ifdef RAVE
     // amaf
     long double amaf_score = 0;
     if(tree[id].N_AMAF > 0){
-        amaf_score = -((long double)tree[id].sum1_AMAF / tree[id].N_AMAF);
+        amaf_score = -((long double)(tree[id].sum1_AMAF / tree[id].N_AMAF) - MIN_S) / RANGE;
     }
 
     long double alpha = std::max(0.0L, std::min(1.0L, (long double)tree[id].Ntotal / RAVE_EQUIV));
@@ -86,17 +86,24 @@ void update(int id, const int deltaS, const int deltaS2, const int deltaN, std::
 }
 
 void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree){
+    std::vector<AmafMove> played_moves;
+    played_moves.reserve(AMAF_CUTOFF);
     for(int i = 0; i < tree[cur_id].Nchild; i++){
-        std::vector<AmafMove> played_moves;
-        played_moves.reserve(AMAF_CUTOFF);
         int child_id = tree[cur_id].c_id[i];
-        for(int j = 0; j < SIMULATION_PER_CHILD; j++){
-            Position copy(pos);
-            copy.do_move(tree[child_id].ply);
-            int result = pos_simulation(copy, played_moves);
+        Position copy(pos);
+        copy.do_move(tree[child_id].ply);
+        int result = pos_simulation(copy, played_moves);
 
-            backpropagate(child_id, result, result * result, 1, tree, played_moves);
-        }
+        backpropagate(child_id, result, result * result, 1, tree, played_moves);
+    }
+
+    for(int i = 0; i < SIMULATION_PER_CHILD; i++){
+        int best_child = find_best_ucb(cur_id, tree);
+        played_moves.clear();
+        Position copy(pos);
+        copy.do_move(tree[best_child].ply);
+        double result = pos_simulation(copy, played_moves);
+        backpropagate(best_child, result, result * result, 1, tree, played_moves);
     }
 }
 

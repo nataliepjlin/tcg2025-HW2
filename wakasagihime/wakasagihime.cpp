@@ -8,6 +8,7 @@
 #include <cmath>
 #include <chrono>
 #include "mcts/h/mcts.h"
+#include <fstream>
 
 // Girls are preparing...
 __attribute__((constructor)) void prepare()
@@ -31,6 +32,21 @@ __attribute__((constructor)) void prepare()
 
     // Prepare magic
     init_magic<Cannon>(cannonTable, cannonMagics);
+}
+
+void log_position(int best, const std::vector<MCTSNode>& nodes) {
+    std::ofstream fout("./log.log", std::ios::app); // append mode
+    if (!fout.is_open()) {
+        std::cerr << "Failed to open log file\n";
+        return;
+    }
+
+
+    fout << "Total simulations: " << nodes[0].Ntotal << "\n";
+    fout << "Best simulations mean: " << nodes[best].Mean << "\n";
+    fout << "------------------------\n";
+
+    fout.close();
 }
 
 // le fishe
@@ -68,5 +84,6 @@ int main()
         // choose the best move
         int best_id = find_best_move(tree);
         info << tree[best_id].ply;
+        log_position(best_id, tree);
     }
 }

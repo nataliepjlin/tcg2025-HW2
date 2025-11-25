@@ -5,13 +5,15 @@
 #include "node.h"
 #include "simulation.h"
 
-const int SIMULATION_PER_CHILD = 1;
-const long double C = 1.4L;
+const int SIMULATION_PER_CHILD = 200;
+const long double C = 1.8L;
 const int root_id = 0;
 const int inf = 1e9;
 const int MAX_VISIT = 1e4;
+const long double RANGE = 2.0L;
+const long double MIN_S = -1.0L;
 
-const double RAVE_EQUIV = 1000.0;
+const double RAVE_EQUIV = 10000.0;
 
 long double UCB(int id, const std::vector<MCTSNode> &tree);
 int find_best_ucb(int cur_id, const std::vector<MCTSNode> &tree);
