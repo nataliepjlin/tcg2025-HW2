@@ -49,6 +49,34 @@ void log_position(int best, const std::vector<MCTSNode>& nodes) {
     fout.close();
 }
 
+void show_tree(const std::vector<MCTSNode>& nodes) {
+    int max_depth = 0;
+    long int total_depth = 0;
+    int leaf = 0;
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        if(nodes[i].Nchild == 0) {
+            ++leaf;
+            total_depth += nodes[i].depth;
+            if (nodes[i].depth > max_depth) {
+                max_depth = nodes[i].depth;
+            }
+        }
+    }
+    std::ofstream fout("./log.log", std::ios::app); // append mode
+    if (!fout.is_open()) {
+        std::cerr << "Failed to open log file\n";
+        return;
+    }
+
+
+    fout << "Max depth: " << max_depth << "\n";
+    fout << "Average depth: " << (leaf > 0 ? static_cast<double>(total_depth) / leaf : 0) << "\n";
+    fout << "Leaf nodes: " << leaf << "\n";
+    fout << "------------------------\n";
+
+    fout.close();
+}
+
 // le fishe
 int main()
 {
@@ -86,5 +114,6 @@ int main()
         int best_id = find_best_move(tree);
         info << tree[best_id].ply;
         log_position(best_id, tree);
+        show_tree(tree);
     }
 }

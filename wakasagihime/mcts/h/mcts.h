@@ -5,13 +5,14 @@
 #include "node.h"
 #include "simulation.h"
 
+const int INITIAL_SIMULATIONS = 5;
 const int SIMULATION_PER_CHILD = 200;
-const long double C = 1.8L;
+const long double C = 1.4L;
 const int root_id = 0;
 const int inf = 1e9;
 const int MAX_VISIT = 1e4;
-const long double RANGE = 2.0L;
-const long double MIN_S = -1.0L;
+const long double RANGE = 64.0L;
+const long double MIN_S = -32.0L;
 
 const double RAVE_EQUIV = 10000.0;
 

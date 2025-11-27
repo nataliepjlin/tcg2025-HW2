@@ -90,11 +90,15 @@ void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const
     played_moves.reserve(AMAF_CUTOFF);
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
-        Position copy(pos);
-        copy.do_move(tree[child_id].ply);
-        int result = pos_simulation(copy, played_moves, root_color);
-
-        backpropagate(child_id, result, result * result, 1, tree, played_moves);
+        for(int j = 0; j < INITIAL_SIMULATIONS; j++){
+            #ifdef RAVE
+            played_moves.clear();
+            #endif
+            Position copy(pos);
+            copy.do_move(tree[child_id].ply);
+            int result = pos_simulation(copy, played_moves, root_color);
+            backpropagate(child_id, result, result * result, 1, tree, played_moves);
+        }
     }
 
     for(int i = 0; i < SIMULATION_PER_CHILD; i++){
@@ -102,7 +106,7 @@ void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const
         played_moves.clear();
         Position copy(pos);
         copy.do_move(tree[best_child].ply);
-        double result = pos_simulation(copy, played_moves, root_color);
+        int result = pos_simulation(copy, played_moves, root_color);
         backpropagate(best_child, result, result * result, 1, tree, played_moves);
     }
 }
