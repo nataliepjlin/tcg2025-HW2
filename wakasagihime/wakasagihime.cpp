@@ -9,6 +9,7 @@
 #include <chrono>
 #include "mcts/h/mcts.h"
 #include <fstream>
+#include "alphabeta/h/alphabeta.h"
 
 // Girls are preparing...
 __attribute__((constructor)) void prepare()
@@ -87,6 +88,15 @@ int main()
     while (std::getline(std::cin, line)) {
         auto start_time = std::chrono::steady_clock::now();
         Position pos(line);
+
+        // check whether is close to terminal
+        if(early_termination(pos)){
+            // switch to alpha-beta
+            Move ab_move = alphabeta_search(pos);
+            info << ab_move;
+            continue;
+        }
+
         
         // build root node
         std::vector<MCTSNode> tree;

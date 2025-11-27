@@ -85,9 +85,26 @@ void update(int id, const int deltaS, const int deltaS2, const int deltaN, std::
                         tree[id].Mean * tree[id].Mean;
 }
 
+bool early_termination(Position &pos){
+    std::vector<Square> red_pcs = squares_sorted(pos, pos.pieces(Red));
+    std::vector<Square> black_pcs = squares_sorted(pos, pos.pieces(Black));
+    bool can_capture = false;
+    for(Square rsq: red_pcs){
+        for(Square bsq: black_pcs){
+            if(pos.peek_piece_at(rsq).type > pos.peek_piece_at(bsq).type){
+                can_capture = true;
+                break;
+            }
+        }
+        if(can_capture) break;
+    }
+    return can_capture;
+}
+
 void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const Color root_color){
     std::vector<AmafMove> played_moves;
     played_moves.reserve(AMAF_CUTOFF);
+
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
         for(int j = 0; j < INITIAL_SIMULATIONS; j++){
@@ -168,14 +185,15 @@ int find_best_move(const std::vector<MCTSNode> &tree){
 
 void terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree, const Color root_color){
     int result;
+    int diff = pos.count(root_color) - pos.count(Color(root_color ^ 1));
     if(pos.winner() == root_color){
-        result = 1;
+        result = win_score + diff;
     }
     else if(pos.winner() == Mystery){
-        result = 0;
+        result = diff;
     }
     else{
-        result = -1;
+        result = -win_score + diff;
     }
     backpropagate(id, result, result * result, 1, tree, {});
 }

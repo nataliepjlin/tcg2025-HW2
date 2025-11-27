@@ -26,5 +26,6 @@ void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vecto
 int find_best_move(const std::vector<MCTSNode> &tree);
 void terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree, const Color root_color);
 bool is_move_in_simulation(const MCTSNode &node, const std::vector<AmafMove> &played_moves);
+bool early_termination(Position &pos);
 
 #endif // MCTS_H

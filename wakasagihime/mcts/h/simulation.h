@@ -37,6 +37,8 @@ const int yummy_table[7][8] = {
 
 const int other_move_score = 1;
 
+const int win_score = 16;
+
 const int AMAF_CUTOFF = 15; // Only record the first 15 moves of random play
 
 struct AmafMove{

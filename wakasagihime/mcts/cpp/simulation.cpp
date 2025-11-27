@@ -51,12 +51,15 @@ int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves, const Col
         #endif
         copy.do_move(m);
     }
+
+    int diff = copy.count(root_color) - copy.count(Color(root_color ^ 1));
+
     if (copy.winner() == root_color) {
-        return 1;
+        return win_score + diff;
     } else if (copy.winner() == Mystery) {
-        return 0;
+        return diff;
     }
-    return -1;
+    return -win_score + diff;
 }
 
 #endif // SIMULATION_CPP
