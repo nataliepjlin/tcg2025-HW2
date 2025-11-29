@@ -7,7 +7,7 @@ int move_evaluation(const Position &pos, const Move &m){
     PieceType attacker = pos.peek_piece_at(m.from()).type;
     PieceType target = pos.peek_piece_at(m.to()).type;
 
-    return (target != NO_PIECE) ? yummy_table[attacker][target] : other_move_score;
+    return(target != NO_PIECE) ? yummy_table[attacker][target] : yummy_table[attacker][7];
 }
 
 Move strategy_weighted_random(const Position &pos, MoveList<> &moves){

@@ -85,20 +85,37 @@ void update(int id, const int deltaS, const int deltaS2, const int deltaN, std::
                         tree[id].Mean * tree[id].Mean;
 }
 
-bool early_termination(Position &pos){
-    std::vector<Square> red_pcs = squares_sorted(pos, pos.pieces(Red));
-    std::vector<Square> black_pcs = squares_sorted(pos, pos.pieces(Black));
-    bool can_capture = false;
-    for(Square rsq: red_pcs){
-        for(Square bsq: black_pcs){
-            if(pos.peek_piece_at(rsq).type > pos.peek_piece_at(bsq).type){
-                can_capture = true;
+bool early_termination_checker(const Position &pos, const std::vector<Square> &pcs1, const std::vector<Square> &pcs2){
+    for(Square rsq: pcs1){
+        bool can_capture_all = true;
+        PieceType my_pt = pos.peek_piece_at(rsq).type;
+        
+        for(Square bsq: pcs2){
+            PieceType op_pt = pos.peek_piece_at(bsq).type;
+            
+            if(!(my_pt > op_pt)){ 
+                can_capture_all = false;
                 break;
             }
         }
-        if(can_capture) break;
+        if(can_capture_all) return true;
     }
-    return can_capture;
+    return false;
+}
+
+bool early_termination(Position &pos){
+
+    // the opponent has no cannon and you have a piece that can capture all of your opponent’s pieces.
+    std::vector<Square> red_pcs = squares_sorted(pos, pos.pieces(Red));
+    std::vector<Square> black_pcs = squares_sorted(pos, pos.pieces(Black));
+
+    bool has_cannon_red = pos.count(Red, Cannon) > 0 && pos.count(Red) > 1;// more than just cannon
+    bool has_cannon_black = pos.count(Black, Cannon) > 0 && pos.count(Black) > 1;
+    
+    return (!has_cannon_black &&
+            early_termination_checker(pos, red_pcs, black_pcs)) ||
+           (!has_cannon_red &&
+            early_termination_checker(pos, black_pcs, red_pcs));
 }
 
 void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const Color root_color){

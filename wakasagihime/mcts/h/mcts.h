@@ -14,7 +14,7 @@ const int MAX_VISIT = 1e4;
 const long double RANGE = 64.0L;
 const long double MIN_S = -32.0L;
 
-const double RAVE_EQUIV = 10000.0;
+const double RAVE_EQUIV = 800.0;
 
 long double UCB(int id, const std::vector<MCTSNode> &tree);
 int find_best_ucb(int cur_id, const std::vector<MCTSNode> &tree);
