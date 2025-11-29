@@ -35,20 +35,12 @@ const int yummy_table[7][8] = {
     { 200,   0,   0,   0,   0,   0, 8, 1} 
 };
 
-const int other_move_score = 1;
-
 const int win_score = 16;
 
-const int AMAF_CUTOFF = 15; // Only record the first 15 moves of random play
-
-struct AmafMove{
-    Move m;
-    PieceType pt_from;
-    Color c_from;
-};
+const int total_type = 14; // 0~6 even depth, 7~13 odd depth
 
 int move_evaluation(const Position &pos, const Move &m);
 Move strategy_weighted_random(const Position &pos, MoveList<> &moves);
-int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves, const Color root_color);
+int pos_simulation(Position &pos, int played_moves[total_type][SQUARE_NB][SQUARE_NB], const Color root_color, const int iter, int cur_depth);
 
 #endif // SIMULATION_H

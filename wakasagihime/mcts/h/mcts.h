@@ -22,10 +22,10 @@ Position find_pv(const Position &pos, int &cur_id, const std::vector<MCTSNode> &
 bool expand(const Position &pos, const int cur_id, std::vector<MCTSNode> &tree);
 void update(int id, std::vector<MCTSNode> &tree);
 void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const Color root_color);
-void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const std::vector<AmafMove>& played_moves);
+void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const int played_moves[total_type][SQUARE_NB][SQUARE_NB]);
 int find_best_move(const std::vector<MCTSNode> &tree);
 void terminal_update(int id, const Position &pos, std::vector<MCTSNode> &tree, const Color root_color);
-bool is_move_in_simulation(const MCTSNode &node, const std::vector<AmafMove> &played_moves);
+bool is_move_in_simulation(const MCTSNode &node, const int played_moves[total_type][SQUARE_NB][SQUARE_NB], const int iter);
 bool early_termination(Position &pos);
 
 #endif // MCTS_H

@@ -25,6 +25,7 @@ public:
 
     int N_AMAF;
     long long sum1_AMAF;
+    long double Mean_AMAF;
 
     // root
     MCTSNode(int pid = 0, int d = 0){
@@ -39,6 +40,7 @@ public:
 
         N_AMAF = 0;
         sum1_AMAF = 0;
+        Mean_AMAF = 0;
     }
 
     // non-root
@@ -57,6 +59,7 @@ public:
 
         N_AMAF = 0;
         sum1_AMAF = 0;
+        Mean_AMAF = 0;
     }
 };
 

@@ -36,18 +36,16 @@ Move strategy_weighted_random(const Position &pos, MoveList<> &moves){
     return moves[index];
 }
 
-int pos_simulation(Position &pos, std::vector<AmafMove> &played_moves, const Color root_color){
+int pos_simulation(Position &pos, int played_moves[total_type][SQUARE_NB][SQUARE_NB], const Color root_color, const int iter, int cur_depth){
     Position copy(pos);
 
-    int depth_count = 0;
     while (copy.winner() == NO_COLOR) {
         MoveList<> moves(copy);
         Move m = strategy_weighted_random(copy, moves);
         #ifdef RAVE
-        if(depth_count < AMAF_CUTOFF){
-            played_moves.push_back({m, copy.peek_piece_at(m.from()).type, copy.peek_piece_at(m.from()).side});
-        }
-        depth_count++;
+        cur_depth++;
+        int type_index = (cur_depth & 1) ? (7 + copy.peek_piece_at(m.from()).type) : copy.peek_piece_at(m.from()).type;
+        played_moves[type_index][m.from()][m.to()] = iter;
         #endif
         copy.do_move(m);
     }

@@ -22,10 +22,10 @@ long double UCB(int id, const std::vector<MCTSNode> &tree){
     // amaf
     long double amaf_score = 0;
     if(tree[id].N_AMAF > 0){
-        amaf_score = -((long double)(tree[id].sum1_AMAF / tree[id].N_AMAF) - MIN_S) / RANGE;
+        amaf_score = (tree[id].depth & 1) ? (1 - (tree[id].Mean_AMAF - MIN_S) / RANGE) : (tree[id].Mean_AMAF - MIN_S) / RANGE;
     }
 
-    long double alpha = std::max(0.0L, std::min(1.0L, (long double)tree[id].Ntotal / RAVE_EQUIV));
+    long double alpha = std::min(1.0L, (long double)tree[id].Ntotal / RAVE_EQUIV);
     long double combined_score = alpha * mc_score + (1.0L - alpha) * amaf_score;
 
     return combined_score + tree[ tree[id].p_id ].CsqrtlogN / tree[id].sqrtN;
@@ -119,44 +119,36 @@ bool early_termination(Position &pos){
 }
 
 void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const Color root_color){
-    std::vector<AmafMove> played_moves;
-    played_moves.reserve(AMAF_CUTOFF);
+    int played_moves[total_type][SQUARE_NB][SQUARE_NB] = {{{0}}};// [piece_type][from][to]
 
+    int iter = 1;
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
         for(int j = 0; j < INITIAL_SIMULATIONS; j++){
-            #ifdef RAVE
-            played_moves.clear();
-            #endif
             Position copy(pos);
             copy.do_move(tree[child_id].ply);
-            int result = pos_simulation(copy, played_moves, root_color);
+            int result = pos_simulation(copy, played_moves, root_color, iter, tree[child_id].depth);
             backpropagate(child_id, result, result * result, 1, tree, played_moves);
+            iter++;
         }
     }
 
     for(int i = 0; i < SIMULATION_PER_CHILD; i++){
         int best_child = find_best_ucb(cur_id, tree);
-        played_moves.clear();
         Position copy(pos);
         copy.do_move(tree[best_child].ply);
-        int result = pos_simulation(copy, played_moves, root_color);
+        int result = pos_simulation(copy, played_moves, root_color, iter, tree[best_child].depth);
         backpropagate(best_child, result, result * result, 1, tree, played_moves);
+        iter++;
     }
 }
 
-bool is_move_in_simulation(const MCTSNode &node, const std::vector<AmafMove> &played_moves){
-    for(const auto &amove : played_moves){
-        if(node.ply == amove.m &&
-           node.pt_from == amove.pt_from &&
-           node.c_from == amove.c_from){
-            return true;
-        }
-    }
-    return false;
+bool is_move_in_simulation(const MCTSNode &node, const int played_moves[total_type][SQUARE_NB][SQUARE_NB], const int iter){
+    int type_index = (node.depth & 1) ? (7 + node.pt_from) : node.pt_from;
+    return played_moves[type_index][node.ply.from()][node.ply.to()] == iter;
 }
 
-void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const std::vector<AmafMove>& played_moves){
+void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const int played_moves[total_type][SQUARE_NB][SQUARE_NB]){
     int current_id = id;
     while(true){
         // standard mcts update
@@ -172,9 +164,10 @@ void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vecto
             if(sibling_id == current_id)
                 continue;
             
-            if(is_move_in_simulation(tree[sibling_id], played_moves)){
+            if(is_move_in_simulation(tree[sibling_id], played_moves, tree[sibling_id].depth)){
                 tree[sibling_id].N_AMAF += deltaN;
                 tree[sibling_id].sum1_AMAF += deltaS;
+                tree[sibling_id].Mean_AMAF = (long double)tree[sibling_id].sum1_AMAF / tree[sibling_id].N_AMAF;
             }
         }
         #endif // RAVE
