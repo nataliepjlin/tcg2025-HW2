@@ -12,10 +12,6 @@ bool is_terminal(Position &pos){
     return pos.winner() != NO_COLOR;
 }
 
-bool move_compare(const Position &pos, const Move &a, const Move &b){
-    return move_evaluation(pos, a) > move_evaluation(pos, b);
-}
-
 void log_alphabeta(int depth){
     std::ofstream fout("./log.log", std::ios::app); // append mode
     if (!fout.is_open()) {
@@ -62,9 +58,6 @@ int F3(Position &pos, int alpha, int beta, int depth){
     }
 
     MoveList<> moves(pos);
-    std::sort(moves.begin(), moves.end(), [&](const Move &a, const Move &b){
-        return move_compare(pos, a, b);
-    });
 
     int mx = -2e9;
     bool has_safe_move = false;
@@ -96,10 +89,6 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
     time_out = false;
 
     MoveList<> moves(pos);
-    // Initial sort
-    std::sort(moves.begin(), moves.end(), [&](const Move &a, const Move &b){
-        return move_compare(pos, a, b);
-    });
 
     Move best_move = moves[0];
     Move best_move_this_iter = moves[0];
@@ -177,7 +166,6 @@ int pos_score(Position &pos, const Color cur_color){
             score -= Piece_Value[p.type];
         }
     }
-    score *= MATERIAL_SCALE;
 
     Board my_board = pos.pieces(cur_color);
     Board opp_board = pos.pieces(opp_color);

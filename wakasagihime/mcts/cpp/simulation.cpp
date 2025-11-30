@@ -3,6 +3,23 @@
 
 #include "../h/simulation.h"
 
+bool is_risky_move(const Position &pos, const Move &m){
+    Direction dirs[] = {NORTH, SOUTH, EAST, WEST};
+    Square to = m.to();
+    Piece my_piece = pos.peek_piece_at(m.from());
+    for(Direction dir: dirs){
+        Square adj = Square(to + dir);
+        if(adj >= SQ_A1 && adj < SQUARE_NB){
+            Piece adj_piece = pos.peek_piece_at(adj);
+            if(adj_piece.side != my_piece.side && adj_piece.side != NO_COLOR
+            && adj_piece.type != Cannon && adj_piece.type > my_piece.type){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 int move_evaluation(const Position &pos, const Move &m){
     PieceType attacker = pos.peek_piece_at(m.from()).type;
     PieceType target = pos.peek_piece_at(m.to()).type;
