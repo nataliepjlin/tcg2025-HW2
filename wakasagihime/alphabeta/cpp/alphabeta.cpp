@@ -49,11 +49,11 @@ int F3(Position &pos, int alpha, int beta, int depth){
         // FIX: Add depth bonus. Higher depth value = shallower in tree (closer to root) = faster win.
         // Assuming depth counts DOWN from Max to 0.
         if(pos.winner() == pos.due_up())
-            return ab_win_score + depth + diff; 
+            return AB_WIN_SCORE + depth + diff; 
         else if(pos.winner() == Mystery)
             return diff; // Draw
         else
-            return -(ab_win_score + depth) + diff;
+            return -(AB_WIN_SCORE + depth) + diff;
     }
 
     // Depth Cutoff
@@ -86,12 +86,12 @@ int F3(Position &pos, int alpha, int beta, int depth){
     }
     
     // Stalemate check
-    if (!has_safe_move) return -(ab_win_score + depth); 
+    if (!has_safe_move) return -(AB_WIN_SCORE + depth); 
 
     return mx;
 }
 
-Move alphabeta_search(Position &pos){
+Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pair<int, int>> &tt, const int game_round){
     ab_start_time = std::chrono::steady_clock::now();
     time_out = false;
 
@@ -103,6 +103,7 @@ Move alphabeta_search(Position &pos){
 
     Move best_move = moves[0];
     Move best_move_this_iter = moves[0];
+    Move second_best_move = moves[0];
     
     // 3. Iterative Deepening Loop
     // Start at depth 1, increase until time runs out
@@ -135,12 +136,31 @@ Move alphabeta_search(Position &pos){
             break; 
         }
         else{
+            second_best_move = best_move;
             best_move = best_move_this_iter;
             // Optimization: If we found a forced mate, stop early
-            if (mx > ab_win_score - 5000) break;
+            if(mx > FORCE_WIN_THRESHOLD)
+                break;
         }
     }
     log_alphabeta(depth - 1);
+
+    /*
+    // if the position has been seen before and the position is good, try to play the different move to avoid repetition
+    uint64_t pos_hash = compute_zobrist_hash(pos);
+    auto it = tt.find(pos_hash);
+    
+    if(it != tt.end() && it->second.first == game_round && it->second.second >= 2){
+        // repetition detected, evaluate the position
+        int original_score = pos_score(pos, pos.due_up());
+        debug << "score of repeated position: " << original_score << "\n";
+        if(original_score > 0){
+            debug << "Repetition detected, trying to avoid it.\n";
+            return second_best_move;
+        }
+    }
+    */
+
     return best_move;
 }
 
@@ -157,23 +177,33 @@ int pos_score(Position &pos, const Color cur_color){
             score -= Piece_Value[p.type];
         }
     }
+    score *= MATERIAL_SCALE;
 
     Board my_board = pos.pieces(cur_color);
     Board opp_board = pos.pieces(opp_color);
     if(pos.count(cur_color) && pos.count(opp_color)){
-        int min_dist = 1000;
-        
-        for(Square my_sq : BoardView(my_board)){
-            for(Square opp_sq : BoardView(opp_board)){
-                int dist = SquareDistance[my_sq][opp_sq];
-                if(dist < min_dist){
-                    min_dist = dist;
+        for(Square opp_sq : BoardView(opp_board)){
+            PieceType opp_pc = pos.peek_piece_at(opp_sq).type;
+            
+            int min_dist_to_this_enemy = 1000;
+            bool can_be_killed = false;
+
+            for(Square my_sq : BoardView(my_board)){
+                PieceType my_pc = pos.peek_piece_at(my_sq).type;
+                
+                // Only measure distance if I can actually hurt them
+                if(my_pc > opp_pc && !(opp_pc > my_pc)){
+                    int d = SquareDistance[my_sq][opp_sq];
+                    if(d < min_dist_to_this_enemy){
+                        min_dist_to_this_enemy = d;
+                        can_be_killed = true;
+                    }
                 }
             }
+            if(can_be_killed){
+                score -= min_dist_to_this_enemy;
+            }
         }
-        // Subtract distance from score. 
-        // Closer = Smaller Distance = Less Penalty = Higher Score.
-        score -= min_dist; 
     }
 
     return score;

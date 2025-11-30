@@ -10,6 +10,9 @@
 #include "mcts/h/mcts.h"
 #include <fstream>
 #include "alphabeta/h/alphabeta.h"
+#include "utils/h/eval.h"
+#include "utils/h/zobrist.h"
+#include <unordered_map>
 
 // Girls are preparing...
 __attribute__((constructor)) void prepare()
@@ -33,6 +36,8 @@ __attribute__((constructor)) void prepare()
 
     // Prepare magic
     init_magic<Cannon>(cannonTable, cannonMagics);
+
+    init_zobrist();
 }
 
 void log_position(int best, const std::vector<MCTSNode>& nodes) {
@@ -83,16 +88,31 @@ int main()
 {
     std::string line;
     std::chrono::milliseconds TIME_LIMIT(4500);
+    std::unordered_map<uint64_t, std::pair<int, int>> tt; // transposition table: board hash -> (game round, visit count)
 
+    int game_round = 0;
     /* read input board state */
     while (std::getline(std::cin, line)) {
         auto start_time = std::chrono::steady_clock::now();
         Position pos(line);
 
+        if(is_new_game(pos)){
+            game_round++;
+        }
+
         // check whether is close to terminal
         if(early_termination(pos)){
             // switch to alpha-beta
-            Move ab_move = alphabeta_search(pos);
+            Move ab_move = alphabeta_search(pos, tt, game_round);
+
+            uint64_t pos_hash = compute_zobrist_hash(pos);
+            if(tt.find(pos_hash) != tt.end()){
+                tt[pos_hash].second++;
+            }
+            else{
+                tt[pos_hash] = std::make_pair(game_round, 1);
+            }
+            debug << "Storing position in TT with hash: " << pos_hash << ", visit count: " << tt[pos_hash].second << "\n";
             info << ab_move;
             continue;
         }
