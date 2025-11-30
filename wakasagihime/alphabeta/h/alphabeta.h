@@ -11,7 +11,7 @@
 
 bool is_terminal(Position &pos);
 int F3(Position &pos, int alpha, int beta, int depth);
-Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pair<int, int>> &tt, const int game_round);
+Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pair<int, Move>> &tt, const int game_round);
 bool move_compare(const Position &pos, const Move &a, const Move &b);
 int pos_score(Position &pos, const Color cur_color);
 

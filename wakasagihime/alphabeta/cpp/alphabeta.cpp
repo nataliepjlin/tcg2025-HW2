@@ -84,15 +84,25 @@ int F3(Position &pos, int alpha, int beta, int depth){
     return mx;
 }
 
-Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pair<int, int>> &tt, const int game_round){
+Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pair<int, Move>> &tt, const int game_round){
     ab_start_time = std::chrono::steady_clock::now();
     time_out = false;
 
     MoveList<> moves(pos);
 
-    Move best_move = moves[0];
-    Move best_move_this_iter = moves[0];
-    Move second_best_move = moves[0];
+    int best_move = 0;
+    int best_move_this_iter = 0;
+
+    // Check transposition table for previously found best move
+    uint64_t pos_hash = compute_zobrist_hash(pos);
+    auto it = tt.find(pos_hash);
+    bool has_tt_move = false;
+    Move tt_move = moves[0];
+    if(it != tt.end() && it->second.first == game_round && pos_score(pos, pos.due_up()) > 0){
+        has_tt_move = true;
+        tt_move = it->second.second;
+    }
+
     
     // 3. Iterative Deepening Loop
     // Start at depth 1, increase until time runs out
@@ -105,6 +115,8 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
 
         // Search root children manually to track best_move
         for(int i = 0; i < moves.size(); i++){
+            if(has_tt_move && moves[i] == tt_move) continue;// skip TT move
+
             Position copy(pos);
             copy.do_move(moves[i]);
             
@@ -115,7 +127,7 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
 
             if(t > mx){
                 mx = t;
-                best_move_this_iter = moves[i];
+                best_move_this_iter = i;
             }
         }
 
@@ -125,7 +137,6 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
             break; 
         }
         else{
-            second_best_move = best_move;
             best_move = best_move_this_iter;
             // Optimization: If we found a forced mate, stop early
             if(mx > FORCE_WIN_THRESHOLD)
@@ -150,7 +161,7 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
     }
     */
 
-    return best_move;
+    return moves[best_move];
 }
 
 int pos_score(Position &pos, const Color cur_color){

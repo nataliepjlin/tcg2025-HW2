@@ -88,7 +88,7 @@ int main()
 {
     std::string line;
     std::chrono::milliseconds TIME_LIMIT(4500);
-    std::unordered_map<uint64_t, std::pair<int, int>> tt; // transposition table: board hash -> (game round, visit count)
+    std::unordered_map<uint64_t, std::pair<int, Move>> tt; // transposition table: board hash -> (game round, Move)
 
     int game_round = 0;
     /* read input board state */
@@ -106,13 +106,13 @@ int main()
             Move ab_move = alphabeta_search(pos, tt, game_round);
 
             uint64_t pos_hash = compute_zobrist_hash(pos);
-            if(tt.find(pos_hash) != tt.end()){
-                tt[pos_hash].second++;
+            if(tt.find(pos_hash) == tt.end()){
+                tt[pos_hash] = std::make_pair(game_round, ab_move);
             }
-            else{
-                tt[pos_hash] = std::make_pair(game_round, 1);
+            else if(tt[pos_hash].first != game_round){
+                tt[pos_hash] = std::make_pair(game_round, ab_move);
             }
-            debug << "Storing position in TT with hash: " << pos_hash << ", visit count: " << tt[pos_hash].second << "\n";
+            debug << "Storing position in TT with hash: " << pos_hash << ", move: " << ab_move << "\n";
             info << ab_move;
             continue;
         }
