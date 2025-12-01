@@ -8,11 +8,11 @@ const int MaxChild = 64;
 class MCTSNode{
 public:
     Move ply;  // the ply from parent to here
-    int p_id; // parent id, root’s parent is the root
-    int c_id[MaxChild]; // children id
+    long long p_id; // parent id, root’s parent is the root
+    long long c_id[MaxChild]; // children id
     int depth; // depth, 0 for the root
-    int Nchild; // number of children
-    int Ntotal; // total # of simulations
+    long long Nchild; // number of children
+    long long Ntotal; // total # of simulations
     long double CsqrtlogN; // c * sqrt(log(Ntotal))
     long double sqrtN; // sqrt(Ntotal)
     long long sum1; // sum1: sum of scores
@@ -28,7 +28,7 @@ public:
     long double Mean_AMAF;
 
     // root
-    MCTSNode(int pid = 0, int d = 0){
+    MCTSNode(long long pid = 0, long long d = 0){
         p_id = pid;
         depth = d;
         // expandable = true;
@@ -44,7 +44,7 @@ public:
     }
 
     // non-root
-    MCTSNode(int pid, int d, Move m, const Position &pos){
+    MCTSNode(long long pid, long long d, Move m, const Position &pos){
         p_id = pid;
         depth = d;
         ply = m;
