@@ -17,8 +17,6 @@ long double UCB(int id, const std::vector<MCTSNode> &tree){
     // If visited enough, purely exploit
     if(tree[id].Ntotal >= MAX_VISIT)
         return mc_score;
-
-    #ifdef RAVE
     // amaf
     long double amaf_score = 0;
     if(tree[id].N_AMAF > 0){
@@ -29,9 +27,6 @@ long double UCB(int id, const std::vector<MCTSNode> &tree){
     long double combined_score = alpha * mc_score + (1.0L - alpha) * amaf_score;
 
     return combined_score + tree[ tree[id].p_id ].CsqrtlogN / tree[id].sqrtN;
-    #else
-    return mc_score + tree[ tree[id].p_id ].CsqrtlogN / tree[id].sqrtN;
-    #endif // RAVE
 }
 
 int find_best_ucb(int cur_id, const std::vector<MCTSNode> &tree){
@@ -119,21 +114,22 @@ bool early_termination(Position &pos){
 }
 
 void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const Color root_color){
-    int played_moves[total_type][SQUARE_NB][SQUARE_NB] = {{{0}}};// [piece_type][from][to]
+    long long played_moves[total_type][SQUARE_NB][SQUARE_NB] = {{{0}}};// [piece_type][from][to]
 
-    int iter = 1;
+    long long iter = 1;
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
-        for(int j = 0; j < INITIAL_SIMULATIONS; j++){
-            Position copy(pos);
-            copy.do_move(tree[child_id].ply);
-            int result = pos_simulation(copy, played_moves, root_color, iter, tree[child_id].depth);
-            backpropagate(child_id, result, result * result, 1, tree, played_moves);
-            iter++;
-        }
+        // for(int j = 0; j < INITIAL_SIMULATIONS; j++){
+        Position copy(pos);
+        copy.do_move(tree[child_id].ply);
+        int result = pos_simulation(copy, played_moves, root_color, iter, tree[child_id].depth);
+        backpropagate(child_id, result, result * result, 1, tree, played_moves);
+        iter++;
+        // }
     }
 
-    for(int i = 0; i < SIMULATION_PER_CHILD; i++){
+    /*
+    for(int i = 0; i < SIMULATION_PER_ACTION; i++){
         int best_child = find_best_ucb(cur_id, tree);
         Position copy(pos);
         copy.do_move(tree[best_child].ply);
@@ -141,14 +137,15 @@ void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const
         backpropagate(best_child, result, result * result, 1, tree, played_moves);
         iter++;
     }
+    */
 }
 
-bool is_move_in_simulation(const MCTSNode &node, const int played_moves[total_type][SQUARE_NB][SQUARE_NB], const int iter){
+bool is_move_in_simulation(const MCTSNode &node, const long long played_moves[total_type][SQUARE_NB][SQUARE_NB], const long long iter){
     int type_index = (node.depth & 1) ? (7 + node.pt_from) : node.pt_from;
     return played_moves[type_index][node.ply.from()][node.ply.to()] == iter;
 }
 
-void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const int played_moves[total_type][SQUARE_NB][SQUARE_NB]){
+void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vector<MCTSNode> &tree, const long long played_moves[total_type][SQUARE_NB][SQUARE_NB]){
     int current_id = id;
     while(true){
         // standard mcts update
@@ -158,7 +155,6 @@ void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vecto
 
         // amaf update
         int parent_id = tree[current_id].p_id;
-        #ifdef RAVE
         for(int i = 0; i < tree[parent_id].Nchild; i++){
             int sibling_id = tree[parent_id].c_id[i];
             if(sibling_id == current_id)
@@ -170,13 +166,16 @@ void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vecto
                 tree[sibling_id].Mean_AMAF = (long double)tree[sibling_id].sum1_AMAF / tree[sibling_id].N_AMAF;
             }
         }
-        #endif // RAVE
 
         current_id = parent_id;
     }
 }
 
 int find_best_move(const std::vector<MCTSNode> &tree){
+    if(tree[root_id].Nchild == 0) {
+        // No children expanded, this should not happen but safety check
+        return -1;
+    }
     
     int best_id = tree[root_id].c_id[0];
     long double bestWR = tree[best_id].Mean; 

@@ -24,13 +24,13 @@ def play_one_game(args):
 
         ply = 1
 
-        #print(f">r 'START 0'")
+        print(f">r 'START 0'")
         ref.stdin.write("START 0\n")
         ref.stdin.flush()
 
         while True:
             msg = readline(ref)
-            #print(f"<r '{msg}'")
+            print(f"<r '{msg}'")
             if msg is None or msg.startswith("ERR"):
                 break
 
@@ -40,11 +40,11 @@ def play_one_game(args):
             black_str = "Agent 2" if (game_id % 2) else "Agent 1"
 
             # get state
-            #print(f">r 'STATE'")
+            print(f">r 'STATE'")
             ref.stdin.write("STATE\n")
             ref.stdin.flush()
             status = readline(ref)
-            #print(f"<r '{status}'")
+            print(f"<r '{status}'")
             if status == "IN-PLAY":
                 board = readline(ref)
                 ok = readline(ref)
@@ -83,11 +83,11 @@ def play_one_game(args):
                 return black_str, 'b' if (ply % 2) else red_str, 'r'
 
             # get moves from agent
-            #print(f">a '{board}'")
+            print(f">a '{board}'")
             to_play.stdin.write(board + '\n')
             to_play.stdin.flush()
             do_move = readline(to_play)
-            #print(f"<a '{do_move}'")
+            print(f"<a '{do_move}'")
 
             if do_move is None:
                 if show_detail:
@@ -95,7 +95,7 @@ def play_one_game(args):
                 return black_str, 'b' if (ply % 2) else red_str, 'r'
 
             # submit move
-            #print(f">r '{do_move}'")
+            print(f">r '{do_move}'")
             ref.stdin.write(do_move + '\n')
             ref.stdin.flush()
 

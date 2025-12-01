@@ -28,6 +28,11 @@ int move_evaluation(const Position &pos, const Move &m){
 }
 
 Move strategy_weighted_random(const Position &pos, MoveList<> &moves){
+    if(moves.size() == 0) {
+        // Safety check - should not happen
+        return Move();
+    }
+    
     int scores[MaxChild + 1];
     scores[0] = 0;
     for(int i = 0; i < moves.size(); i++){
@@ -53,18 +58,22 @@ Move strategy_weighted_random(const Position &pos, MoveList<> &moves){
     return moves[index];
 }
 
-int pos_simulation(Position &pos, int played_moves[total_type][SQUARE_NB][SQUARE_NB], const Color root_color, const int iter, int cur_depth){
+int pos_simulation(Position &pos, long long played_moves[total_type][SQUARE_NB][SQUARE_NB], const Color root_color, const long long iter, long long cur_depth){
     Position copy(pos);
+    
+    const int MAX_SIM_MOVES = 200; // Prevent infinite simulation
+    int move_count = 0;
 
-    while (copy.winner() == NO_COLOR) {
+    while (copy.winner() == NO_COLOR && move_count < MAX_SIM_MOVES) {
         MoveList<> moves(copy);
+        if(moves.size() == 0) break; // No moves available
+        
         Move m = strategy_weighted_random(copy, moves);
-        #ifdef RAVE
         cur_depth++;
         int type_index = (cur_depth & 1) ? (7 + copy.peek_piece_at(m.from()).type) : copy.peek_piece_at(m.from()).type;
         played_moves[type_index][m.from()][m.to()] = iter;
-        #endif
         copy.do_move(m);
+        move_count++;
     }
 
     int diff = copy.count(root_color) - copy.count(Color(root_color ^ 1));
@@ -72,6 +81,9 @@ int pos_simulation(Position &pos, int played_moves[total_type][SQUARE_NB][SQUARE
     if (copy.winner() == root_color) {
         return win_score + diff;
     } else if (copy.winner() == Mystery) {
+        return diff;
+    } else if (copy.winner() == NO_COLOR) {
+        // Simulation timed out, return current score
         return diff;
     }
     return -win_score + diff;

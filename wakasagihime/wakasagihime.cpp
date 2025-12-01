@@ -100,6 +100,14 @@ int main()
             game_round++;
         }
 
+        // Get available moves as fallback
+        MoveList<> moves(pos);
+        if(moves.size() == 0) {
+            // Should not happen in valid game state, but safety check
+            info << Move();
+            continue;
+        }
+
         // check whether is close to terminal
         if(early_termination(pos)){
             // switch to alpha-beta
@@ -112,7 +120,6 @@ int main()
             else if(tt[pos_hash].first != game_round){
                 tt[pos_hash] = std::make_pair(game_round, ab_move);
             }
-            debug << "Storing position in TT with hash: " << pos_hash << ", move: " << ab_move << "\n";
             info << ab_move;
             continue;
         }
@@ -123,6 +130,7 @@ int main()
         tree.push_back(MCTSNode(0, 0)); // root
 
         // MCTS main loop
+        int iterations = 0;
         while (std::chrono::steady_clock::now() - start_time < TIME_LIMIT){
             // Selection
             int current_id = root_id;
@@ -138,12 +146,20 @@ int main()
                 // Simulation & Backpropagation
                 mcts_simulate(pv_pos, current_id, tree, root_color);
             }
+            iterations++;
         }
 
         // choose the best move
         int best_id = find_best_move(tree);
-        info << tree[best_id].ply;
+        if(best_id == -1) {
+            // Fallback: output first available move
+            info << moves[0];
+        } else {
+            info << tree[best_id].ply;
+        }
+        /*
         log_position(best_id, tree);
         show_tree(tree);
+        */
     }
 }

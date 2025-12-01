@@ -41,6 +41,6 @@ const int total_type = 14; // 0~6 even depth, 7~13 odd depth
 
 int move_evaluation(const Position &pos, const Move &m);
 Move strategy_weighted_random(const Position &pos, MoveList<> &moves);
-int pos_simulation(Position &pos, int played_moves[total_type][SQUARE_NB][SQUARE_NB], const Color root_color, const int iter, int cur_depth);
+int pos_simulation(Position &pos, long long played_moves[total_type][SQUARE_NB][SQUARE_NB], const Color root_color, const long long iter, long long cur_depth);
 
 #endif // SIMULATION_H

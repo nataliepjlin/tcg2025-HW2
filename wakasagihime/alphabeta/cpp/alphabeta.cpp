@@ -5,7 +5,7 @@
 
 // Global time check
 std::chrono::time_point<std::chrono::steady_clock> ab_start_time;
-const int AB_TIME_LIMIT_MS = 4500;
+const int AB_TIME_LIMIT_MS = 4000;
 bool time_out = false;
 
 bool is_terminal(Position &pos){
@@ -28,9 +28,9 @@ void log_alphabeta(int depth){
 }
 
 int F3(Position &pos, int alpha, int beta, int depth){
-    // Check time every 1024 nodes (bitwise AND is faster than modulo)
+    // Check time every 256 nodes for more frequent timeout checks
     static int node_count = 0;
-    if ((++node_count & 1023) == 0){
+    if ((++node_count & 255) == 0){
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - ab_start_time).count() > AB_TIME_LIMIT_MS){
             time_out = true;
@@ -89,6 +89,10 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
     time_out = false;
 
     MoveList<> moves(pos);
+    if(moves.size() == 0) {
+        // Should not happen in valid game state, but safety check
+        return Move();
+    }
 
     int best_move = 0;
     int best_move_this_iter = 0;
@@ -106,8 +110,7 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
     
     // 3. Iterative Deepening Loop
     // Start at depth 1, increase until time runs out
-    int depth = 1;
-    for (; depth <= 50; depth++){
+    for (int depth = 1; depth <= 50; depth++){
         
         int mx = -2e9;
         int alpha = -2e9;
@@ -143,9 +146,9 @@ Move alphabeta_search(Position &pos, const std::unordered_map<uint64_t, std::pai
                 break;
         }
     }
-    log_alphabeta(depth - 1);
 
     /*
+    log_alphabeta(depth - 1);
     // if the position has been seen before and the position is good, try to play the different move to avoid repetition
     uint64_t pos_hash = compute_zobrist_hash(pos);
     auto it = tt.find(pos_hash);
