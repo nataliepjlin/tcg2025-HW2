@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "../../lib/chess.h"
-const int MaxChild = 64;
+const int MaxChild = 100;
 
 class MCTSNode{
 public:
