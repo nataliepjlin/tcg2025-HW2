@@ -119,25 +119,12 @@ void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const
     long long iter = 1;
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
-        // for(int j = 0; j < INITIAL_SIMULATIONS; j++){
         Position copy(pos);
         copy.do_move(tree[child_id].ply);
         int result = pos_simulation(copy, played_moves, root_color, iter, tree[child_id].depth);
         backpropagate(child_id, result, result * result, 1, tree, played_moves);
         iter++;
-        // }
     }
-
-    /*
-    for(int i = 0; i < SIMULATION_PER_ACTION; i++){
-        int best_child = find_best_ucb(cur_id, tree);
-        Position copy(pos);
-        copy.do_move(tree[best_child].ply);
-        int result = pos_simulation(copy, played_moves, root_color, iter, tree[best_child].depth);
-        backpropagate(best_child, result, result * result, 1, tree, played_moves);
-        iter++;
-    }
-    */
 }
 
 bool is_move_in_simulation(const MCTSNode &node, const long long played_moves[total_type][SQUARE_NB][SQUARE_NB], const long long iter){
@@ -155,15 +142,17 @@ void backpropagate(int id, int deltaS, int deltaS2, const int deltaN, std::vecto
 
         // amaf update
         int parent_id = tree[current_id].p_id;
-        for(int i = 0; i < tree[parent_id].Nchild; i++){
-            int sibling_id = tree[parent_id].c_id[i];
-            if(sibling_id == current_id)
-                continue;
-            
-            if(is_move_in_simulation(tree[sibling_id], played_moves, tree[sibling_id].depth)){
-                tree[sibling_id].N_AMAF += deltaN;
-                tree[sibling_id].sum1_AMAF += deltaS;
-                tree[sibling_id].Mean_AMAF = (long double)tree[sibling_id].sum1_AMAF / tree[sibling_id].N_AMAF;
+        if(played_moves != nullptr){// not a terminal update
+            for(int i = 0; i < tree[parent_id].Nchild; i++){
+                int sibling_id = tree[parent_id].c_id[i];
+                if(sibling_id == current_id)
+                    continue;
+                
+                if(is_move_in_simulation(tree[sibling_id], played_moves, tree[sibling_id].depth)){
+                    tree[sibling_id].N_AMAF += deltaN;
+                    tree[sibling_id].sum1_AMAF += deltaS;
+                    tree[sibling_id].Mean_AMAF = (long double)tree[sibling_id].sum1_AMAF / tree[sibling_id].N_AMAF;
+                }
             }
         }
 
