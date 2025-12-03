@@ -119,10 +119,21 @@ void mcts_simulate(Position &pos, int cur_id, std::vector<MCTSNode> &tree, const
     long long iter = 1;
     for(int i = 0; i < tree[cur_id].Nchild; i++){
         int child_id = tree[cur_id].c_id[i];
+        for(int j = 0; j < INITIAL_SIMULATIONS; j++){
+            Position copy(pos);
+            copy.do_move(tree[child_id].ply);
+            int result = pos_simulation(copy, played_moves, root_color, iter, tree[child_id].depth);
+            backpropagate(child_id, result, result * result, 1, tree, played_moves);
+            iter++;
+        }
+    }
+
+    for(int i = 0; i < SIMULATION_PER_ACTION; i++){
+        int best_child = find_best_ucb(cur_id, tree);
         Position copy(pos);
-        copy.do_move(tree[child_id].ply);
-        int result = pos_simulation(copy, played_moves, root_color, iter, tree[child_id].depth);
-        backpropagate(child_id, result, result * result, 1, tree, played_moves);
+        copy.do_move(tree[best_child].ply);
+        int result = pos_simulation(copy, played_moves, root_color, iter, tree[best_child].depth);
+        backpropagate(best_child, result, result * result, 1, tree, played_moves);
         iter++;
     }
 }
